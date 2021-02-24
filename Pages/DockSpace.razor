@@ -140,7 +140,7 @@
     
     public void OnContainerMouseDown(MouseEventArgs e){
         Console.WriteLine("CONTAINER DOWN");
-        input_service.OnMouseDown(e, ("",this.OnMouseUpCallback));
+        //input_service.OnMouseDown(e, ("",this.OnMouseUpCallback));
         var items = input_service.GetMouseDownItems(0);
         Console.WriteLine(items.Count);
     }
