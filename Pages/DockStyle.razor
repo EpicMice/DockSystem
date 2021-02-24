@@ -1,0 +1,41 @@
+﻿@inject StyleUpdate style_updater;
+
+<style>
+@GetID(){
+    top: @GetTop()px;
+    left: @GetLeft()px;
+}
+</style>
+
+@code {
+    [Parameter]
+    public string ID { get; set; } = "";
+
+    public string st = "";
+
+    public int top = 0;
+    public int left = 0;
+    
+    public string GetID(){
+        return "#"+this.ID;
+    }
+
+    public int GetTop(){
+        return top;
+    }
+    public int GetLeft(){
+        return left;
+    }
+
+
+    protected override async Task OnInitializedAsync(){
+        style_updater.AddStyleCallback(this.ID, (ab )=>{
+            this.left += ab.Item1;
+            this.top += ab.Item2;
+            
+            Console.WriteLine(this.left+":"+this.top+":::");
+            this.StateHasChanged();
+        });
+        await Task.CompletedTask;
+    }
+}

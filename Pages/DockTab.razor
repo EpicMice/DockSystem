@@ -1,0 +1,81 @@
+﻿@inject DockData dock_data;
+@inject InputService input_service;
+@inject StyleUpdate style_updater;
+
+@*<div class="docktitle"  @ondragstart="OnTitleDragStart" @ondragend="OnTitleDragEnd" draggable="true">*@
+
+<div class="docktitle" @onmousedown=@OnTitleMouseDown >
+    
+</div>
+
+<div class="docktabs">
+    @foreach(DockContent dtab in dock_data.Dock_Map[ID].Content_Map.Values){
+        string ID =dtab.ID;
+        bool active = dtab.Active;
+
+        Action OnTabDragStart = dtab.OnTabDragStart;
+        Action OnTabDragEnd = dtab.OnTabDragEnd;
+
+        <div class="docktab" draggable="true" @ondragstart=@OnTabDragStart @ondragend=@OnTabDragEnd>
+            @ID
+        </div>
+    }
+</div>
+
+<div class="dockcontent">
+    @foreach(DockContent dtab in dock_data.Dock_Map[ID].Content_Map.Values){
+        string ID =dtab.ID;
+        DockContentType dct = dtab.DCT;
+        bool active = !dtab.Active;
+        <div class="innercontent" hidden=@active>
+            @switch(dct){
+                case DockContentType.DIV:
+                    <div>
+                        @ID
+                    </div>
+                break;
+            }
+        </div>
+    }
+</div>
+
+@code {
+    public string DragString = null;
+
+    [Parameter]
+    public string ID { get; set; } = "";
+    
+    public void OnTitleMouseDown(MouseEventArgs e){
+        Console.WriteLine("TITLE DOWN");
+        input_service.OnMouseDown(e, ("",this.OnTitleMouseUpCallback));
+    }
+
+    public void OnTitleMouseUpCallback(){
+        Console.WriteLine("MOUSE UP ON TITLE");
+    }
+
+    public void OnTitleDragStart(DragEventArgs e){
+        
+        Console.WriteLine("Starting drag: "+ID);
+
+        Console.WriteLine(input_service.ScreenX + ":" + e.ClientX+":::");
+        this.DragString = input_service.StartDrag((int)e.ScreenX, (int)e.ScreenY);
+    }
+
+    public void OnTitleDragEnd(DragEventArgs e){
+        Console.WriteLine("Ending drag");
+        Console.WriteLine(e.ScreenX + ":" + e.ScreenY);
+        Console.WriteLine(input_service.ScreenX + ":" + input_service.ScreenY);
+
+        (bool, int, int) items = input_service.GetDragDifference(this.DragString, (int)e.ScreenX, (int)e.ScreenY);
+        if(items.Item1){
+            Console.WriteLine("difference: " + items.Item2 + ":" + items.Item3);
+            style_updater.UpdateStyle(ID,             
+            (            
+                (int)(items.Item2),
+                (int)(items.Item3)
+            ));
+        }
+
+    }
+}

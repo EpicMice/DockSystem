@@ -1,0 +1,160 @@
+﻿@inject InputService input_service;
+@inject DockData dock_data;
+
+<style>
+    :root {
+        --FontColorHigh: #00FFC2;
+        --FontColorLow: #00FFC2;
+        --FontColorLime: #8DFFA7;
+        --FontColorLimeLow: #00FF66;
+        --DividerColorA: gray;
+        --UIFont: normal normal bold 24px Segoe UI;
+        --UIFontNormal: normal normal normal 24px Segoe UI;
+        --BarHighlight: white;
+        --DarkCover1: #00000082;
+        --TealCoverLight: #00fff347;
+        --ListLabelBackgroundColor: #141414;
+        --ListElementBackgroundColor: #1d1d1d;
+    }
+
+    .container{
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: @Width;
+        height: @Height;
+        background-color: lightblue;
+        font: var(--UIFontNormal);
+    }
+
+    .dock{
+        position: absolute;
+        width: 369px;
+        height: min-content;
+        background-color: red;
+        display: grid;
+        grid-template-rows: 20px 50px minmax(10px, 50px);
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+
+    .docktitle{
+        grid-row: 1;
+        background-color: black;
+    }
+
+    .docktabs{
+        margin: 0px 4px;
+        position: relative;
+        top: 0px;
+        left: 0px;
+        grid-row: 2;
+        display: grid;
+        grid-auto-columns: minmax(auto, 100px);
+        grid-auto-flow: column;
+        box-sizing: border-box;
+        overflow: hidden;
+        gap: 4px;
+    }
+
+    .docktab{
+        white-space: nowrap;
+        position: relative;
+        width: 100%;
+        min-width: 100%;
+        background-color: lightgray;
+        border-radius: 5px 5px 0px 0px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        align-self: center;
+        display: block;
+        padding: 10px 0px 10px 4px;
+        box-sizing: border-box;
+    }
+    
+    .dockcontent{
+        margin: 0px 4px 4px;
+        grid-row: 3;
+        position: relative;
+        top: 0px;
+        left: 0px;
+        background-color: gray;
+        overflow: hidden;
+        place-self: stretch;
+    }
+
+    .dockcontent > .innercontent{
+    }
+</style>
+
+<div class="container" @onmousedown=@OnContainerMouseDown @onmouseup=@OnContainerMouseUp @onmouseover=@OnMouseOver @onmousemove=@OnMouseMove @onclick=@OnClick @ondragover=@OnDragOver>
+    @foreach(DockInstance dock in dock_data.Dock_Map.Values){
+        string id=dock.Dock_ID;
+        <Dock ID=@id /> 
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Width {get; set;} = "100%";
+    
+    [Parameter]
+    public string Height {get; set;} = "100%";
+
+    public Action<MouseEventArgs> OnClick{
+        get 
+        {
+            Action<MouseEventArgs> listener_instance = input_service.OnClick;
+            listener_instance += (e) => {
+
+            };
+            return listener_instance;
+        } 
+    }
+    
+    public Action<MouseEventArgs> OnMouseOver { 
+        get 
+        {
+            Action<MouseEventArgs> listener_instance = input_service.OnMouseOver;
+            listener_instance += (e) => { 
+            
+            };
+            return listener_instance;
+        } 
+    }
+    
+    public Action<MouseEventArgs> OnMouseMove {
+        get 
+        {
+            Action<MouseEventArgs> listener_instance = input_service.OnMouseMove;
+            listener_instance += (e) => {
+                
+            };
+            return listener_instance;
+        } 
+    }
+
+    public void OnDragOver(DragEventArgs e){
+
+    }
+    
+    public void OnContainerMouseDown(MouseEventArgs e){
+        Console.WriteLine("CONTAINER DOWN");
+        input_service.OnMouseDown(e, ("",this.OnMouseUpCallback));
+        var items = input_service.GetMouseDownItems(0);
+        Console.WriteLine(items.Count);
+    }
+
+    public void OnMouseUpCallback(){
+        Console.WriteLine("MOUSE UP ON CONTAINER");
+    }
+
+    public void OnContainerMouseUp(MouseEventArgs e){
+        input_service.OnMouseUp(e);
+        Console.WriteLine("CONTAINER UP");
+    }
+
+    protected override async Task OnInitializedAsync(){
+        await Task.CompletedTask;
+    }
+}

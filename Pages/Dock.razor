@@ -1,0 +1,24 @@
+﻿@inject DockData dock_data;
+
+<div id=@ID class="dock" 
+    @ondrop="OnDrop" 
+    @ondragover="OnDragOver" 
+    @ondragover:preventDefault="true"
+>
+    <DockStyle ID=@ID/>
+    <DockTab ID=@ID/>
+</div>
+
+@code {
+    [Parameter]
+    public string ID { get; set; } = "";
+    
+    public void OnDrop(DragEventArgs e){
+        Console.WriteLine("did drop");
+    }
+
+    public void OnDragOver(DragEventArgs e){
+        //Console.WriteLine("over");
+    }
+}
+
