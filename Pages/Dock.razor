@@ -1,24 +1,19 @@
-﻿@inject DockData dock_data;
+﻿@inject InputService input_service;
+@inject DockData dock_data;
 
-<div id=@ID class="dock" 
-    @ondrop="OnDrop" 
-    @ondragover="OnDragOver" 
-    @ondragover:preventDefault="true"
+
+<div id=@ID class="dock"
 >
-    <DockStyle ID=@ID/>
-    <DockTab ID=@ID/>
+    <DockStyle ID=@ID />
+    <DockTab ID=@ID parent_events=@parent_events />
 </div>
 
 @code {
     [Parameter]
     public string ID { get; set; } = "";
     
-    public void OnDrop(DragEventArgs e){
-        Console.WriteLine("did drop");
-    }
-
-    public void OnDragOver(DragEventArgs e){
-        //Console.WriteLine("over");
-    }
+    [Parameter]
+    public EventActionGroup parent_events { get; set; }
+    
 }
 

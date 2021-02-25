@@ -2,9 +2,11 @@
 @inject InputService input_service;
 @inject StyleUpdate style_updater;
 
+@implements IDisposable
+
 @*<div class="docktitle"  @ondragstart="OnTitleDragStart" @ondragend="OnTitleDragEnd" draggable="true">*@
 
-<div class="docktitle" @onmousedown=@OnTitleMouseDown >
+<div class="docktitle" @onmouseover=@event_actions.Events[EventActionGroup.OnMouseOver] @onmousedown=@event_actions.Events[EventActionGroup.OnMouseDown] @onmousedown:stopPropagation="true">
     
 </div>
 
@@ -16,7 +18,7 @@
         Action OnTabDragStart = dtab.OnTabDragStart;
         Action OnTabDragEnd = dtab.OnTabDragEnd;
 
-        <div class="docktab" draggable="true" @ondragstart=@OnTabDragStart @ondragend=@OnTabDragEnd>
+        <div class="docktab" draggable="true" >
             @ID
         </div>
     }
@@ -45,23 +47,31 @@
     [Parameter]
     public string ID { get; set; } = "";
     
-    public void OnTitleMouseDown(MouseEventArgs e){
-        Console.WriteLine("TITLE DOWN");
-        //input_service.OnMouseDown(e, ("",this.OnTitleMouseUpCallback));
+    [Parameter]
+    public EventActionGroup parent_events { get; set; }
+
+    public EventActionGroup event_actions { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        (this.event_actions = new EventActionGroup { 
+            ID = this.ID,
+            Parent = parent_events,
+        }).FiredEvents[EventActionGroup.OnMouseDown] = (event_data)=> {
+            var med = event_data as MouseEventData;
+            Console.WriteLine("Source: "+med.Source+" Target: "+med.Target);
+        };
+
+        input_service.RegisterElement(this.event_actions);
+
+        await Task.CompletedTask;
     }
 
-    public void OnTitleMouseUpCallback(){
-        Console.WriteLine("MOUSE UP ON TITLE");
+    public void Dispose(){
+        input_service.UnregisterElement(event_actions);
     }
 
-    public void OnTitleDragStart(DragEventArgs e){
-        
-        Console.WriteLine("Starting drag: "+ID);
-
-        Console.WriteLine(input_service.ScreenX + ":" + e.ClientX+":::");
-        this.DragString = input_service.StartDrag((int)e.ScreenX, (int)e.ScreenY);
-    }
-
+     /*
     public void OnTitleDragEnd(DragEventArgs e){
         Console.WriteLine("Ending drag");
         Console.WriteLine(e.ScreenX + ":" + e.ScreenY);
@@ -76,6 +86,6 @@
                 (int)(items.Item3)
             ));
         }
-
     }
+    */
 }

@@ -1,6 +1,8 @@
 ﻿@inject InputService input_service;
 @inject DockData dock_data;
 
+@implements IDisposable
+
 <style>
     :root {
         --FontColorHigh: #00FFC2;
@@ -87,10 +89,11 @@
     }
 </style>
 
-<div class="container" @onmousedown=@OnContainerMouseDown @onmouseup=@OnContainerMouseUp @onmouseover=@OnMouseOver @onmousemove=@OnMouseMove @onclick=@OnClick @ondragover=@OnDragOver>
-    @foreach(DockInstance dock in dock_data.Dock_Map.Values){
+@* <div class="container" @onmousedown=@OnContainerMouseDown @onmouseup=@OnContainerMouseUp @onmouseover=@OnMouseOver @onmousemove=@OnMouseMove @onclick=@OnClick @ondragover=@OnDragOver>*@
+<div key="container" class="container" @onmousemove=@event_actions.Events[EventActionGroup.OnMouseMove] @onmousedown=@event_actions.Events[EventActionGroup.OnMouseDown]>
+    @foreach(DockInstance dock in dock_data.Dock_Map.Values){        
         string id=dock.Dock_ID;
-        <Dock ID=@id /> 
+        <Dock @key=@id ID=@id parent_events=@event_actions />
     }
 </div>
 
@@ -101,60 +104,41 @@
     [Parameter]
     public string Height {get; set;} = "100%";
 
-    public Action<MouseEventArgs> OnClick{
-        get 
+    public EventActionGroup event_actions { get; set; } = new EventActionGroup
+    {
+        ID = "Container",
+    };
+
+    protected override async Task OnInitializedAsync() {
+        //Initialize actions here.
+        this.event_actions.FiredEvents[EventActionGroup.OnMouseDown] += (event_data) =>
         {
-            Action<MouseEventArgs> listener_instance = input_service.OnClick;
-            listener_instance += (e) => {
+            var med = event_data as MouseEventData;
 
-            };
-            return listener_instance;
-        } 
-    }
-    
-    public Action<MouseEventArgs> OnMouseOver { 
-        get 
+            Console.WriteLine(med.MouseArgs.ScreenX+":"+med.MouseArgs.ScreenY);
+
+            Console.WriteLine("Source: " + med.Source + " Target: " + med.Target);
+        };
+
+        this.event_actions.FiredEvents[EventActionGroup.OnMouseMove] += (event_data) =>
         {
-            Action<MouseEventArgs> listener_instance = input_service.OnMouseOver;
-            listener_instance += (e) => { 
-            
-            };
-            return listener_instance;
-        } 
-    }
-    
-    public Action<MouseEventArgs> OnMouseMove {
-        get 
-        {
-            Action<MouseEventArgs> listener_instance = input_service.OnMouseMove;
-            listener_instance += (e) => {
-                
-            };
-            return listener_instance;
-        } 
-    }
+            //var med = event_data as MouseEventData;
+            //Console.WriteLine("MOVING: "+med.MouseArgs.ScreenX+":"+med.MouseArgs.ScreenY);
+        };
 
-    public void OnDragOver(DragEventArgs e){
-
-    }
-    
-    public void OnContainerMouseDown(MouseEventArgs e){
-        Console.WriteLine("CONTAINER DOWN");
-        //input_service.OnMouseDown(e, ("",this.OnMouseUpCallback));
-        var items = input_service.GetMouseDownItems(0);
-        Console.WriteLine(items.Count);
-    }
-
-    public void OnMouseUpCallback(){
-        Console.WriteLine("MOUSE UP ON CONTAINER");
-    }
-
-    public void OnContainerMouseUp(MouseEventArgs e){
-        input_service.OnMouseUp(e);
-        Console.WriteLine("CONTAINER UP");
-    }
-
-    protected override async Task OnInitializedAsync(){
+        input_service.RegisterElement(this.event_actions);
+        /*
+            _ = Task.Run(async ()=>{
+                await Task.Delay(4000);
+                dock_data.Dock_Map.Remove(dock_data.Dock_Map.Keys.FirstOrDefault());
+                Console.WriteLine("doing the thing");
+                this.StateHasChanged();
+            });
+        */
         await Task.CompletedTask;
+    }
+
+    public void Dispose(){
+        input_service.UnregisterElement(event_actions);
     }
 }
