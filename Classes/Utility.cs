@@ -94,6 +94,7 @@ namespace TestThing2.Classes{
             { OnMouseDown,  (a)=>{ } },
             { OnMouseUp,    (a)=>{ } },
             { OnMouseOver,  (a)=>{ } },
+
             { OnDragStart,  (a)=>{ } },
             { OnDragEnd,    (a)=>{ } },
             { OnDragOver,   (a)=>{ } },
