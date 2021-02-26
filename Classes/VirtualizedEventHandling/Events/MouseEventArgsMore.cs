@@ -2,10 +2,13 @@
 
 namespace TestThing2.Classes
 {
-    public class MouseEventArgsMore
+    public class MouseEventArgsMore : IHasArgs
     {
-        public MouseEventArgs self_args;
-
         public string event_id = "some data";
+
+        public object args { set; get; }
+        public void SetEventArgs(object val) => args = val;
+        public T GetEventArgs<T>() => (T)this.args;
+        public MouseEventArgs GetEventArgs() => (MouseEventArgs)this.args;
     }
 }

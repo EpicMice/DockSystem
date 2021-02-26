@@ -30,7 +30,7 @@ namespace TestThing2.Classes
     public class EventActionGroup
     {
 
-        public static Action DefaultAction = () => { };
+        public static Action<object> DefaultAction = (a) => { };
 
         public EventActionGroup Parent { get; set; }
 
@@ -58,20 +58,20 @@ namespace TestThing2.Classes
             OnDrop
         };
 
-        public static Action<EventData> GetDefaultActions()
+        public static Action<T> GetDefaultActions<T>() where T: class
         {
-            return (a) => { DefaultAction(); };
+            return DefaultAction;
         }
 
         public static IEnumerable<EventNames> AllEventNames => Enum.GetValues(typeof(EventNames)).Cast<EventNames>();
 
-        public static Dictionary<EventNames, Action<T>> MakeEventDictionary<T>() => AllEventNames
-            .Select(name => new KeyValuePair<EventNames, Action<T>>(name, (a) => { DefaultAction(); }))
+        public static Dictionary<EventNames, Action<T>> MakeEventDictionary<T>() where T: class => AllEventNames
+            .Select(name => new KeyValuePair<EventNames, Action<T>>(name, DefaultAction))
             .ToDictionary(a => a.Key, a => a.Value);
 
         public Dictionary<EventNames, Action<object>> Events = MakeEventDictionary<object>();
 
-        public Dictionary<EventNames, Action<EventData>> FiredEvents = MakeEventDictionary<EventData>();
+        public Dictionary<EventNames, Action<object>> FiredEvents = MakeEventDictionary<object>();
 
     }
 }

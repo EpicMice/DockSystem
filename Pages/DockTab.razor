@@ -6,7 +6,13 @@
 
 @*<div class="docktitle"  @ondragstart="OnTitleDragStart" @ondragend="OnTitleDragEnd" draggable="true">*@
 
-<div class="docktitle" @onmouseover=@event_actions.Events[EventNames.OnMouseOver] @onmousedown=@event_actions.Events[EventNames.OnMouseDown] @onmousedown:stopPropagation="true">
+<div class="docktitle" 
+@onmouseover=@event_actions.Events[EventNames.OnMouseOver] 
+@onmousedown=@event_actions.Events[EventNames.OnMouseDown] 
+@onmousedown:stopPropagation="true"
+@onmouseup=@event_actions.Events[EventNames.OnMouseUp]
+
+>
     
 </div>
 
@@ -18,7 +24,7 @@
         Action OnTabDragStart = dtab.OnTabDragStart;
         Action OnTabDragEnd = dtab.OnTabDragEnd;
 
-        <div class="docktab" draggable="true" >
+        <div class="docktab">
             @ID
         </div>
     }
@@ -60,6 +66,11 @@
         }).FiredEvents[EventNames.OnMouseDown] = (event_data)=> {
             var med = event_data as MouseEventData;
             Console.WriteLine("Source: "+med.Source+" Target: "+med.Target);
+        };
+
+        this.event_actions.FiredEvents[EventNames.OnDragStart] = (event_data)=> {
+            var med = event_data as MouseEventData;
+            Console.WriteLine("DRAGGING: "+this.ID);
         };
 
         input_service.RegisterElement(this.event_actions);

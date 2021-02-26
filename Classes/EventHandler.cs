@@ -12,11 +12,18 @@ namespace TestThing2.Classes
     public class EventHandler
     {
 
+        public Dictionary<string, EventActionGroup> RegisteredComponents = new Dictionary<string, EventActionGroup>();
+
         public Dictionary<EventNames, EventTrack> EventTrackMap = MouseEventNames
             .Select(name => new KeyValuePair<EventNames, EventTrack>(name, new MouseEventTrack()))
+            .Concat(DragEventNames.Select(name=> new KeyValuePair<EventNames, EventTrack>(name, new DragEventTrack())))
             .ToDictionary(a => a.Key, a => a.Value);
 
         public Dictionary<int, bool> MouseButtonStates = new Dictionary<int, bool>();
+
+        public List<int> TempButtonStates = new List<int>();
+
+        public Dictionary<int, bool> MouseActiveButtonDrag = new Dictionary<int, bool>();
 
         public bool GetMouseButtonState(int button)
         {
@@ -24,9 +31,27 @@ namespace TestThing2.Classes
             return MouseButtonStates[button];
         }
 
-        public void SetMouseButtonState(int button, bool down){
+        public void SetMouseButtonState(int button, bool down) {
             MouseButtonStates.TryAdd(button, down);
             MouseButtonStates[button] = down;
+        }
+
+        public bool GetDragButtonState(int button)
+        {
+            MouseActiveButtonDrag.TryAdd(button, false);
+            return MouseActiveButtonDrag[button];
+        }
+
+        //Returns if the button was not already dragging (down)        
+        //Returns if the button is dragging, but was not already being tracked.
+        public bool SetDragButtonState(int button, bool down)
+        {
+
+            MouseActiveButtonDrag.TryAdd(button, down);
+            MouseActiveButtonDrag[button] = down;
+
+            //just so I can call this method in the where clause.
+            return true;
         }
 
         public List<EventNames> PipelineEventNames = new List<EventNames> {
@@ -44,87 +69,148 @@ namespace TestThing2.Classes
 
         };
 
-        public (EventNames, string, object, Action) RegisterPipelineParams { get; set; } = (EventNames.None, null, null, null);
+        public Dictionary<EventNames, (EventNames, string, object, Action)> RegisterPipelineParamMap = 
+            new Dictionary<EventNames, (EventNames, string, object, Action)>();
+
 
         public EventHandler()
         {
-            PipelineEvents[OnMouseDown] = this.RegisterMousePipelineEvent(state => {
+            PipelineEvents[OnMouseDown] = this.RegisterMousePipelineEvent(OnMouseDown, (id, eventArgs, state) => {
                 if (state == STARTING)
                 {
                     this.SetMouseButtonState((int)((MouseEventArgs)TempEventArgs).Button, true);
-                    Console.WriteLine("MOUSE DOWN");
-                    Console.WriteLine("STARTING");
                 }
 
                 //if(state == BUBBLE_ENDING)                
                 //drag start should start on mousemove events, not mousedown events.                
             });
 
-            PipelineEvents[OnMouseUp] = this.RegisterMousePipelineEvent(state => {
+            PipelineEvents[OnMouseUp] = this.RegisterMousePipelineEvent(OnMouseUp, (id, eventArgs, state) => {
                 if (state == STARTING)
                 {
                     this.SetMouseButtonState((int)((MouseEventArgs)TempEventArgs).Button, false);
-                    Console.WriteLine("MOUSE UP");
-                    Console.WriteLine("STARTING");
+                    return;
+                }          
+                
+                if(state == BUBBLE_ENDING)
+                {
+                    Console.WriteLine(TempEventArgs.GetType());
+
+                    if (TempEventArgs as IHasArgs != null)
+                    {
+                        TempEventArgs = (TempEventArgs as IHasArgs).args;
+
+                        if (TempEventArgs as IHasArgs != null)
+                        {
+                            TempEventArgs = (TempEventArgs as IHasArgs).args;
+                        }
+                    }
+                    
+                    Console.WriteLine(TempEventArgs.GetType());
+
+                    if (this.GetDragButtonState((int)((MouseEventArgs)TempEventArgs).Button))
+                    {
+                        this.SetDragButtonState((int)((MouseEventArgs)TempEventArgs).Button, false);
+
+                        this.RegisteredComponents[id].Events[OnDragEnd](new DragEventArgs { 
+                            //Fill out the eventargs for the spec.
+                        });
+
+                        Console.WriteLine("WHAT: "+id);
+                    }
                 }
             });
 
             //never output to console on mousemove events.
             //unless it's a one-off message.
-            PipelineEvents[OnMouseMove] = this.RegisterMousePipelineEvent(state => {
+            PipelineEvents[OnMouseMove] = this.RegisterMousePipelineEvent(OnMouseMove, (id, eventArgs, state) => {
                 if (state == BUBBLE_ENDING)
                 {
                     //Console.WriteLine("MOUSE UP");
-                    //Console.WriteLine("STARTING");
-                    if (this.GetMouseButtonState((int)((MouseEventArgs)TempEventArgs).Button))
-                    {
 
-                    }
+                    this.TempButtonStates = this.MouseButtonStates
+                    .Where(b => b.Value && !this.GetDragButtonState(b.Key) && this.SetDragButtonState(b.Key, true))
+                    .ToList()
+                    .ConvertAll(e => e.Key)
+                    .ToList();
+
+                    if (this.TempButtonStates.Count > 0)
+                    {
+                        Console.WriteLine(this.TempButtonStates.Count+": "+ id);
+
+                        this.RegisteredComponents[id].Events[OnDragStart](new DragEventArgs
+                        {
+                            //Fill out the eventargs for the spec.
+                        });
+                        }
                 }
             });
+
+            PipelineEvents[OnDragStart] = this.RegisterDragPipelineEvent(OnDragStart, (id, eventArgs, state) => {
+                if (state == STARTING)
+                {
+                    Console.WriteLine("starting drag: " + id);
+                }
+            });
+
+            PipelineEvents[OnDragEnd] = this.RegisterDragPipelineEvent(OnDragEnd, (id, eventArgs, state) => {
+                if (state == STARTING)
+                {
+                    Console.WriteLine("ending drag: " + id);
+                }
+            });
+
+            //implement the OnDragStart function next
         }
 
         Dictionary<EventNames, string> EventStash = new Dictionary<EventNames, string>();
 
-        public Action<string, object,int> RegisterMousePipelineEvent(Action<int> piplineEvent) => (source, mouseEventArgs, state) =>
+        public Action<string, object, int> RegisterMousePipelineEvent(EventNames event_name, Action<string, EventArgs, int> pipelineEvent)//don't ask.
         {
-            if (state == BUBBLE_ENDING) return;
+            return this._RegisterEventPipeline<MouseEventArgs, MouseEventTrack, MouseEventData>(event_name, pipelineEvent);
+        }
 
-            RegisterPipelineParams = (OnMouseDown, source, mouseEventArgs, () =>
+        public Action<string, object, int> RegisterDragPipelineEvent(EventNames event_name, Action<string, EventArgs, int> pipelineEvent)//don't ask.
+        {
+            return this._RegisterEventPipeline<DragEventArgs, DragEventTrack, DragEventData>(event_name, pipelineEvent);
+        }
+
+        private Action<string, object, int> _RegisterEventPipeline<EventArgType, EventTrackType, EventDataType>
+            (EventNames event_name, Action<string, EventArgs, int> pipelineEvent) 
+            where EventTrackType : IGetEventArgs where EventDataType : EventData => (source, event_args, state) =>
+        {
+
+            this.RegisterPipelineParamMap[event_name] = (event_name, source, event_args, () =>
             {
-                piplineEvent(state);
+                pipelineEvent(source, (EventArgs) event_args, state);
             }
             );
 
-            this.RegisterPipelineEvent<MouseEventArgs, MouseEventTrack, MouseEventData>();
+            this.RegisterPipelineEvent<EventArgType, EventTrackType, EventDataType>(event_name);
         };
-        
 
         public object TempEventArgs { get; set; }
         public object TempEventTrack { get; set; }
 
-
         //funcName = name of the function
         //source = ID of the event source (The first element that began the event bubbling.
         //mouseEventArgs = the raw Mouse Event Data
-        public void RegisterPipelineEvent<EventArgType,EventArgTrack,EventArgData>() where EventArgTrack:IGetEventArgs where EventArgData: EventData
+        public void RegisterPipelineEvent<EventArgType,EventArgTrack,EventArgData>(EventNames event_name) where EventArgTrack:IGetEventArgs where EventArgData: EventData
         {
 
-            this.TempEventArgs = RegisterPipelineParams.Item3;
+            this.TempEventArgs = this.RegisterPipelineParamMap[event_name].Item3;
+            ((EventArgTrack) (this.TempEventTrack = this.EventTrackMap[event_name])).SetEventArgs(this.TempEventArgs);
 
-            ((EventArgTrack) (this.TempEventTrack = this.EventTrackMap[OnMouseDown])).SetEventArgs(this.TempEventArgs);
-
-            RegisterPipelineParams.Item4();
+            this.RegisterPipelineParamMap[event_name].Item4();
              
-            if (RegisterPipelineParams.Item2 == null)
+            if (this.RegisterPipelineParamMap[event_name].Item2 == null)
             {
-                RegisterPipelineParams = (RegisterPipelineParams.Item1, ((EventArgData)RegisterPipelineParams.Item3).Source, RegisterPipelineParams.Item3, RegisterPipelineParams.Item4);
-                Console.WriteLine("SOURCE: " + RegisterPipelineParams.Item2);
+                this.RegisterPipelineParamMap[event_name] = (event_name, ((EventArgData)this.RegisterPipelineParamMap[event_name].Item3).Source, this.RegisterPipelineParamMap[event_name].Item3, this.RegisterPipelineParamMap[event_name].Item4);
+                Console.WriteLine("SOURCE: " + this.RegisterPipelineParamMap[event_name].Item2);
             }
 
-            EventStash.TryAdd(RegisterPipelineParams.Item1, RegisterPipelineParams.Item2);
-            EventStash[RegisterPipelineParams.Item1] = RegisterPipelineParams.Item2;
-
+            EventStash.TryAdd(this.RegisterPipelineParamMap[event_name].Item1, this.RegisterPipelineParamMap[event_name].Item2);
+            EventStash[this.RegisterPipelineParamMap[event_name].Item1] = this.RegisterPipelineParamMap[event_name].Item2;
         }
 
         //The first time the function received event_args, it will be MouseEventArgs, KeyEventArgs, or DragEventArgs.
@@ -134,7 +220,7 @@ namespace TestThing2.Classes
 
             if (event_args.GetType() == typeof(MouseEventArgs))
             {
-                return new MouseEventData { Target = id, Source = id, args = new MouseEventArgsMore { event_id = id, self_args = event_args as MouseEventArgs } };
+                return new MouseEventData { Target = id, Source = id, args = new MouseEventArgsMore { event_id = id, args = event_args as MouseEventArgs } };
             }
 
             if (event_args.GetType() == typeof(MouseEventData))
@@ -145,7 +231,7 @@ namespace TestThing2.Classes
 
             if (event_args.GetType() == typeof(DragEventArgs))
             {
-                return new DragEventData { Target = id, Source = id,  args = new DragEventArgsMore { event_id = id, self_args = event_args as DragEventArgs } };
+                return new DragEventData { Target = id, Source = id,  args = new DragEventArgsMore { event_id = id, args = event_args as DragEventArgs } };
             }
 
             if (event_args.GetType() == typeof(DragEventData))
@@ -159,10 +245,9 @@ namespace TestThing2.Classes
 
         public void RegisterEvent(EventActionGroup eag)
         {
+            this.RegisteredComponents.Add(eag.ID, eag);
 
-            var hold = eag.Events.Keys.ToArray();
-
-            foreach (EventNames event_name in hold)
+            foreach (EventNames event_name in eag.Events.Keys.ToArray())
             {
                 eag.Events[event_name] = (event_args) =>
                 {
@@ -179,7 +264,8 @@ namespace TestThing2.Classes
                             //start of bubble
                         }
                     }
-                 
+                    
+                    //perhaps put this in a task.
                     var source_args = this.GetEventMoreID(eag.ID, event_args);
 
                     eag.FiredEvents[event_name](
@@ -198,7 +284,6 @@ namespace TestThing2.Classes
                             run_event(eag.ID, event_args, BUBBLE_ENDING);
                         }
                     }
-
                 };
             }
         }

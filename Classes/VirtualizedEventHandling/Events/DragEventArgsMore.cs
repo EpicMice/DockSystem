@@ -2,10 +2,12 @@
 
 namespace TestThing2.Classes
 {
-    public class DragEventArgsMore
+    public class DragEventArgsMore : IHasArgs
     {
-        public DragEventArgs self_args;
 
         public string event_id = "some data";
+        public object args { set; get; }
+        public void SetEventArgs(object val) => args = val;
+        public DragEventArgs GetEventArgs() => (DragEventArgs)this.args;
     }
 }
