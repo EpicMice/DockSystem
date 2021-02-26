@@ -6,7 +6,7 @@
 
 @*<div class="docktitle"  @ondragstart="OnTitleDragStart" @ondragend="OnTitleDragEnd" draggable="true">*@
 
-<div class="docktitle" @onmouseover=@event_actions.Events[EventActionGroup.OnMouseOver] @onmousedown=@event_actions.Events[EventActionGroup.OnMouseDown] @onmousedown:stopPropagation="true">
+<div class="docktitle" @onmouseover=@event_actions.Events[EventNames.OnMouseOver] @onmousedown=@event_actions.Events[EventNames.OnMouseDown] @onmousedown:stopPropagation="true">
     
 </div>
 
@@ -57,7 +57,7 @@
         (this.event_actions = new EventActionGroup { 
             ID = this.ID,
             Parent = parent_events,
-        }).FiredEvents[EventActionGroup.OnMouseDown] = (event_data)=> {
+        }).FiredEvents[EventNames.OnMouseDown] = (event_data)=> {
             var med = event_data as MouseEventData;
             Console.WriteLine("Source: "+med.Source+" Target: "+med.Target);
         };

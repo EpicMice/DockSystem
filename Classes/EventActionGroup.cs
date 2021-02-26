@@ -1,8 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using static TestThing2.Classes.EventNames;
 
 namespace TestThing2.Classes
 {
+
+    public enum EventNames
+    {
+        OnMouseMove,
+        OnMouseDown,
+        OnMouseUp,
+        OnMouseOver,
+
+        OnDragStart,
+        OnDragEnd,
+        OnDragOver,
+        OnDrop,
+
+        OnKeyDown,
+        OnKeyUp,
+        OnKeyPress,
+
+        OnWheel,
+        OnScroll,
+        None,
+    }
+
     public class EventActionGroup
     {
 
@@ -13,52 +37,41 @@ namespace TestThing2.Classes
         private static int ID_Counter = 0;
         public string ID = "" + EventActionGroup.ID_Counter++;
 
-        public const string OnMouseMove = nameof(OnMouseMove);
-        public const string OnMouseDown = nameof(OnMouseDown);
-        public const string OnMouseUp = nameof(OnMouseUp);
-        public const string OnMouseOver = nameof(OnMouseOver);
+        public static List<EventNames> KeyEventNames = new List<EventNames>
+        {
+            OnKeyDown,
+            OnKeyUp,
+            OnKeyPress
+        };
 
-        public const string OnDragStart = nameof(OnDragStart);
-        public const string OnDragEnd = nameof(OnDragEnd);
-        public const string OnDragOver = nameof(OnDragOver);
-        public const string OnDrop = nameof(OnDrop);
-
-        public List<string> MouseEventNames = new List<string> {
+        public static List<EventNames> MouseEventNames = new List<EventNames> {
             OnMouseMove,
             OnMouseDown,
             OnMouseOver,
             OnMouseUp
         };
 
-        public List<string> DragEventNames = new List<string> {
+        public static List<EventNames> DragEventNames = new List<EventNames> {
             OnDragStart,
             OnDragEnd,
             OnDragOver,
             OnDrop
         };
 
-        public Dictionary<string, Action<object>> Events = new Dictionary<string, Action<object>> {
-            { OnMouseMove,  (a)=>{ } },
-            { OnMouseDown,  (a)=>{ } },
-            { OnMouseUp,    (a)=>{ } },
-            { OnMouseOver,  (a)=>{ } },
+        public static Action<EventData> GetDefaultActions()
+        {
+            return (a) => { DefaultAction(); };
+        }
 
-            { OnDragStart,  (a)=>{ } },
-            { OnDragEnd,    (a)=>{ } },
-            { OnDragOver,   (a)=>{ } },
-            { OnDrop,       (a)=>{ } },
-        };
+        public static IEnumerable<EventNames> AllEventNames => Enum.GetValues(typeof(EventNames)).Cast<EventNames>();
 
-        public Dictionary<string, Action<EventData>> FiredEvents = new Dictionary<string, Action<EventData>> {
-            { OnMouseMove,  (a)=>{ DefaultAction(); } },
-            { OnMouseDown,  (a)=>{ DefaultAction(); } },
-            { OnMouseUp,    (a)=>{ DefaultAction(); } },
-            { OnMouseOver,  (a)=>{ DefaultAction(); } },
+        public static Dictionary<EventNames, Action<T>> MakeEventDictionary<T>() => AllEventNames
+            .Select(name => new KeyValuePair<EventNames, Action<T>>(name, (a) => { DefaultAction(); }))
+            .ToDictionary(a => a.Key, a => a.Value);
 
-            { OnDragStart,  (a)=>{ DefaultAction(); } },
-            { OnDragEnd,    (a)=>{ DefaultAction(); } },
-            { OnDragOver,   (a)=>{ DefaultAction(); } },
-            { OnDrop,       (a)=>{ DefaultAction(); } },
-        };
+        public Dictionary<EventNames, Action<object>> Events = MakeEventDictionary<object>();
+
+        public Dictionary<EventNames, Action<EventData>> FiredEvents = MakeEventDictionary<EventData>();
+
     }
 }

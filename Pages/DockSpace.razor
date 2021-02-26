@@ -90,7 +90,7 @@
 </style>
 
 @* <div class="container" @onmousedown=@OnContainerMouseDown @onmouseup=@OnContainerMouseUp @onmouseover=@OnMouseOver @onmousemove=@OnMouseMove @onclick=@OnClick @ondragover=@OnDragOver>*@
-<div key="container" class="container" @onmousemove=@event_actions.Events[EventActionGroup.OnMouseMove] @onmousedown=@event_actions.Events[EventActionGroup.OnMouseDown]>
+<div key="container" class="container" @onmousemove=@event_actions.Events[EventNames.OnMouseMove] @onmousedown=@event_actions.Events[EventNames.OnMouseDown]>
     @foreach(DockInstance dock in dock_data.Dock_Map.Values){        
         string id=dock.Dock_ID;
         <Dock @key=@id ID=@id parent_events=@event_actions />
@@ -111,16 +111,17 @@
 
     protected override async Task OnInitializedAsync() {
         //Initialize actions here.
-        this.event_actions.FiredEvents[EventActionGroup.OnMouseDown] += (event_data) =>
+        this.event_actions.FiredEvents[EventNames.OnMouseDown] += (event_data) =>
         {
             var med = event_data as MouseEventData;
 
             Console.WriteLine(med.MouseArgs.ScreenX+":"+med.MouseArgs.ScreenY);
 
             Console.WriteLine("Source: " + med.Source + " Target: " + med.Target);
+
         };
 
-        this.event_actions.FiredEvents[EventActionGroup.OnMouseMove] += (event_data) =>
+        this.event_actions.FiredEvents[EventNames.OnMouseMove] += (event_data) =>
         {
             //var med = event_data as MouseEventData;
             //Console.WriteLine("MOVING: "+med.MouseArgs.ScreenX+":"+med.MouseArgs.ScreenY);
