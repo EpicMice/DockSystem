@@ -7,56 +7,6 @@ using static TestThing2.Classes.EventActionGroup;
 
 namespace TestThing2.Classes
 {
-    public class EventData
-    {
-
-    }
-
-    public class MouseEventData : EventData
-    {
-        public MouseEventArgsMore args;
-        public string Target;
-        public string Source;
-        public MouseEventArgs MouseArgs { get { return args.self_args; } }
-    }
-
-    public class DragEventData : EventData
-    {
-        public DragEventArgsMore args;
-        public string Target;
-        public string Source;
-        public DragEventArgs MouseArgs { get { return args.self_args; } }
-    }
-
-    public class MouseEventArgsMore
-    {
-        public MouseEventArgs self_args;
-
-        public string event_id = "some data";
-    }
-
-    public class DragEventArgsMore
-    {
-        public DragEventArgs self_args;
-
-        public string event_id = "some data";
-    }
-
-    public class MouseEventTrack
-    {
-        public int ScreenX;
-        public int ScreenY;
-
-        public int ClientX;
-        public int ClientY;
-
-        public Dictionary<int, bool> ButtonStates = new Dictionary<int, bool>();
-
-        public void UpdateMouse(MouseEventArgs MEA)
-        {
-
-        }
-    }
 
     public class EventHandler
     {
@@ -108,7 +58,6 @@ namespace TestThing2.Classes
             switch (state)
             {
                 case STARTING:
-
                     this.mouse_tracking.ButtonStates.TryAdd((int)event_data.Button, true);
                     break;
                 case PROPAGATING:
