@@ -3,24 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static TestThing2.Classes.EventActionGroup;
 
-namespace TestThing2.Classes{
-
-
-    public class StyleUpdate
-    {
-        public Dictionary<string, Action<(int,int)>> Style_Map = new Dictionary<string, Action<(int, int)>>();
-
-        public void AddStyleCallback(string id, Action<(int, int)> a)
-        {
-            this.Style_Map.Add(id, a);
-        }
-
-        public void UpdateStyle(string id, (int, int) ab)
-        {
-            Style_Map[id](ab);
-        }
-    }
+namespace TestThing2.Classes
+{
     public class EventData
     {
 
@@ -48,70 +34,12 @@ namespace TestThing2.Classes{
 
         public string event_id = "some data";
     }
+
     public class DragEventArgsMore
     {
         public DragEventArgs self_args;
 
         public string event_id = "some data";
-    }
-
-    public class EventActionGroup
-    {
-
-        public static Action DefaultAction = () => { };
-
-        public EventActionGroup Parent { get; set; }
-
-        private static int ID_Counter = 0;
-        public string ID = "" + EventActionGroup.ID_Counter++;
-
-        public const string OnMouseMove = nameof(OnMouseMove);
-        public const string OnMouseDown = nameof(OnMouseDown);
-        public const string OnMouseUp = nameof(OnMouseUp);
-        public const string OnMouseOver = nameof(OnMouseOver);
-
-        public const string OnDragStart = nameof(OnDragStart);
-        public const string OnDragEnd = nameof(OnDragEnd);
-        public const string OnDragOver = nameof(OnDragOver);
-        public const string OnDrop = nameof(OnDrop);
-
-        public List<string> MouseEventNames = new List<string> {
-            OnMouseMove,
-            OnMouseDown,
-            OnMouseOver,
-            OnMouseUp
-        };
-
-        public List<string> DragEventNames = new List<string> {
-            OnDragStart,
-            OnDragEnd,
-            OnDragOver,
-            OnDrop
-        };
-
-        public Dictionary<string, Action<object>> Events = new Dictionary<string, Action<object>> {
-            { OnMouseMove,  (a)=>{ } },
-            { OnMouseDown,  (a)=>{ } },
-            { OnMouseUp,    (a)=>{ } },
-            { OnMouseOver,  (a)=>{ } },
-
-            { OnDragStart,  (a)=>{ } },
-            { OnDragEnd,    (a)=>{ } },
-            { OnDragOver,   (a)=>{ } },
-            { OnDrop,       (a)=>{ } },
-        };
-
-        public Dictionary<string, Action<EventData>> FiredEvents = new Dictionary<string, Action<EventData>> {
-            { OnMouseMove,  (a)=>{ DefaultAction(); } },
-            { OnMouseDown,  (a)=>{ DefaultAction(); } },
-            { OnMouseUp,    (a)=>{ DefaultAction(); } },
-            { OnMouseOver,  (a)=>{ DefaultAction(); } },
-
-            { OnDragStart,  (a)=>{ DefaultAction(); } },
-            { OnDragEnd,    (a)=>{ DefaultAction(); } },
-            { OnDragOver,   (a)=>{ DefaultAction(); } },
-            { OnDrop,       (a)=>{ DefaultAction(); } },
-        };
     }
 
     public class MouseEventTrack
@@ -134,15 +62,6 @@ namespace TestThing2.Classes{
     {
 
         public MouseEventTrack mouse_tracking = new MouseEventTrack();
-
-        public const string OnMouseDown = nameof(OnMouseDown);
-        public const string OnMouseUp = nameof(OnMouseUp);
-        public const string OnMouseOver = nameof(OnMouseOver);
-
-        public const string OnDragStart = nameof(OnDragStart);
-        public const string OnDragOver = nameof(OnDragOver);
-        public const string OnDragEnd = nameof(OnDragEnd);
-        public const string OnDrop = nameof(OnDrop);
 
         public List<string> PipelineEventNames = new List<string> {
             OnMouseDown,
@@ -285,28 +204,6 @@ namespace TestThing2.Classes{
 
                 };
             }
-        }
-    }
-
-    public class InputService {
-
-        public Dictionary<string, EventActionGroup> RegisteredElements = new Dictionary<string, EventActionGroup>();
-
-        public EventHandler event_handler = new EventHandler();
-
-        public int RegisterElement(EventActionGroup eag)
-        {
-            Console.WriteLine("Registering: " + eag.ID);
-            this.RegisteredElements.Add(eag.ID, eag);
-
-            this.event_handler.RegisterEvent(eag);
-            return 1;
-        }
-
-        public void UnregisterElement(EventActionGroup eag)
-        {
-            Console.WriteLine("Unregistering: " + eag.ID);
-            this.RegisteredElements.Remove(eag.ID);
         }
     }
 }
